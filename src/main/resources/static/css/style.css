@@ -1,0 +1,187 @@
+@charset "UTF-8";
+
+body{
+  margin: 0;
+  padding: 0;
+}
+/* typeがnumberのinputを右寄せに設定 */
+input[type="number"]{
+  text-align: right;
+}
+
+/* flexboxコンテナにheader設定 */
+header{
+  display: flex; /*横並び*/
+  background: green; /*color?*/
+  color: white;
+  height: 70px;
+}
+
+header h1{
+  margin: 0;
+  margin-left: 20px;
+}
+
+header div{
+  margin-left: auto;
+  margin-right: 20px;
+  margin-top: 10px;
+  text-align: right;
+}
+
+/* ユーザー名、パスワードのinputの幅設定 */
+input[name=userName]{
+  width: 100px;
+}
+
+input[name=password]{
+  width: 100px;
+}
+
+/* tableのデザイン設定 */
+table {
+  margin: 20px;
+  border-collapse: collapse;  /*セルのボーダーは重なって表示される*/
+}
+
+table td,table th{
+  border: 1px solid grey;
+}
+
+/*tableのヘッダー*/
+th{
+  background: green;
+  color: white;
+}
+
+/*th内の子要素たち*/
+th:nth-child(1){
+  width: 30px;
+}
+
+th:nth-child(2){
+  width: 150px;
+}
+
+th:nth-child(3){
+  width: 120px;
+}
+
+th:nth-child(4){
+  width: 60px;
+}
+
+th:nth-child(5){
+  width: 120px; /*5こめ？*/
+}
+
+/*td内の子要素たち*/
+td:nth-child(1){
+  text-align: right;
+}
+
+td:nth-child(2){
+  text-align: left;
+}
+
+td:nth-child(3){
+  text-align: right;
+}
+
+td:nth-child(4){
+  text-align: center;
+}
+
+td:nth-child(1){
+  text-align: center;  /*5こめ？*/
+}
+
+/*td内のinput?*/
+td input{
+  width: 85%;
+  text-align: right; 
+}
+
+/* カートテーブル、履歴テーブルのthのデザイン */
+table#cart thead tr th, table#history thead tr th{
+  background: #c0c0c0 !important; /* !importantとは？⇒最優先で使用*/
+}
+
+/* 履歴テーブルのtheadの子要素デザイン */
+table#history thead tr th:nth-child(1){
+  width: 150px;
+}
+
+table#history thead tr th:nth-child(2){
+  width: 65px;
+}
+
+table#history thead tr th:nth-child(3){
+  width: 250px;
+}
+
+
+/* 履歴テーブルのtbodyの子要素デザイン */
+table#history tbody tr td:nth-child(1){
+  padding: 0 5px;
+  text-align: left; 
+}
+
+table#history tbody tr td:nth-child(2){
+  padding: 0 5px;
+  text-align: right; 
+}
+
+table#history tbody tr td:nth-child(3){
+  padding: 0 5px;
+  text-align: left; 
+}
+
+/* 管理者用商品登録ページのデザイン */
+#adminPage{
+  margin: 0 30px;
+}
+
+/* 管理者用　商品テーブルのthead内の子要素のデザイン */
+table#adminTable thead tr th:nth-child(1){
+  width: 50px;
+}
+
+table#adminTable thead tr th:nth-child(2){
+  width: 150px;
+}
+
+table#adminTable thead tr th:nth-child(3){
+  width: 100px;
+}
+
+table#adminTable thead tr th:nth-child(4){
+  width: 80px;
+}
+
+/* 管理者用 商品テーブルのtbody内の子要素のデザイン */
+table#adminTable tbody tr th:nth-child(1){
+  padding: 0 5px;
+  text-align: right;
+}
+
+table#adminTable tbody tr th:nth-child(2){
+  padding: 0 5px;
+  text-align: left;
+}
+
+table#adminTable tbody tr th:nth-child(3){
+  padding: 0 5px;
+  text-align: right;
+}
+
+table#adminTable tbody tr th:nth-child(4){
+  padding: 0 5px;
+  text-align: center;
+}
+
+/* エラーメッセージの文字色を赤にする */
+.error{
+  color: red;
+}
+

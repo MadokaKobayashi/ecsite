@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html xmlns:th="www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<link href="/css/style.css" rel="stylesheet">
+<title>ECサイト</title>
+
+<!--ログイン機能-->
+<script>
+//変数の定義（空の配列として初期化）
+let cartList = [];  
+  
+document.addEventListener('DOMContentLoaded', event => {
+  
+  //イベント(id=loginformを持つ要素にてsubmit)が発火⇒login関数呼び出し
+  document.getElementById("loginForm").addEventListener("submit", login);
+  
+  //class=cartBtnを持つ要素を全部取得
+  const cartBtns = document.querySelectorAll(".cartBtn");
+  //cartBtnをループさせ、個々のボタンにてclickイベント発火でaddCart関数を呼び出し
+  cartBtns.forEach((btn) => {
+    btn.addEventListener("click", addCart);
+  });
+  
+  //id=purchaseBtnを持つ要素にてclickイベントが発火した際purchase関数を呼び出す
+  document.getElementById("purchaseBtn").addEventListener("click", purchase);
+  
+  //id=historyBtnを持つ要素にてclickイベントが発火した際showHistory関数を呼び出す
+  document.getElementById("historyBtn").addEventListener("click", showHistory);
+  
+  
+});
+
+//カート表を初期化する(すべて削除する関数)
+function initCart() {
+  
+  const tbody = document.querySelector("#cart tbody");
+  while(tbody.lastChild){
+    tbody.removeChild(tbody.lastChild);
+  }
+  
+}
+
+//ログインに関する処理
+function login(event) {
+ // HTMLフォームのデフォルト操作（ページ遷移）が発生しないよう阻止する
+  event.preventDefault();
+  
+  //カートテーブルをクリアし、メモリ上のカート配列も初期化する
+  //initCart関数の呼び出し
+  initCart();
+  //空の配列に初期化しなおす処理
+  cartList = [];
+  
+  //JavaにPOST送信するオブジェクトを取得・設定する
+  const postObj = {
+    "userName":document.querySelector("input[name=userName]").value,
+    "password":document.querySelector("input[name=password]").value
+  };
+  
+  //fetch APIを使用し、javaと非同期通信(POST)を行う
+  //then(成功)：削除処理完了のアラート表示し、行の削除
+  //catch(エラー)：エラー情報をconsoleに出力する
+  //関数の第一引数は、通信先のURL
+  fetch("/ecsite/api/login",{
+    method:"POST",    
+    headers:{"Content-Type": "application/json"},
+    body:JSON.stringify(postObj),
+  })
+  .then(response => response.text())
+  .then(result => {
+    //Javaから返却されたJSON形式の文字列をJavascriptのオブジェクトに変換し、変数userに代入
+    const user = JSON.parse(result);
+    
+    document.getElementById("welcome").innerText = `ようこそ！ ${user.fullName}さん`;
+    document.getElementById("hiddenUserId").value = user.id;
+    //セレクタ指定は、CSSと一緒（.class、#id）
+    //入力内容の初期化（空文字の代入）
+    document.querySelector("input[name=userName]").value = "";
+    document.querySelector("input[name=password]").value = ""; 
+  })
+  .catch(error => {
+    console.error("Error:", error);
+  })
+}
+
+//カート追加に関する処理
+function addCart(event){
+  //カート追加ボタンの親の親要素から、td要素をすべて抽出しtdListに格納する
+  const tdList = event.target.parentElement.parentElement.querySelectorAll("td");
+  
+  //tdListから、商品情報を取得し、JSオブジェクト形式でgoodsInfoに代入する
+  const goodsInfo = {
+    "id":tdList.item(0).innerText,
+    "goodsName":tdList.item(1).innerText,
+    "price":tdList.item(2).innerText,
+    "count":tdList.item(3).querySelector("input").value 
+  }
+  
+  if(goodsInfo.count === "0" || goodsInfo.count === ""){
+    alert("注文数が0または空欄です。");
+    return; //注文数が0なら、ここで関数処理終了。
+  }
+  
+  //グローバル変数cartListに対して、カート追加対象の商品情報をpushする
+  cartList.push(goodsInfo);
+    
+  //カート表は0から再構築するため、tbody内の要素をクリアする
+  initCart();
+    
+  //グローバル変数cartListをループさせ、カート表を再構築する
+  cartList.forEach(cart => {
+    const tr = document.createElement("tr");
+    
+    //cartオブジェクトを[key,value]でループさせ、個々のtd要素を作成し、trに追加する
+    for([key,value] of Object.entries(cart)) {
+      const td = document.createElement("td");
+      td.innerText = value;
+      tr.appendChild(td);  //appendChild 特定の親要素の中に要素を追加するためのメソッド
+    }
+  
+    //カート削除ボタンの作成
+    const removeBtn = document.createElement("button");
+    removeBtn.innerText = "カート削除";
+    //カート削除ボタンにclass属性の設定
+    removeBtn.setAttribute("class", "removeBtn");
+    //カート削除ボタンに対して、クリック時のイベントリスナ(ターゲットにイベントが発生すると、ハンドラを実行する)を追加
+    removeBtn.addEventListener("click", removeCart);
+  
+    //td要素を作成し、カート削除ボタンを子要素として追加する
+    const td = document.createElement("td");
+    td.appendChild(removeBtn); 
+  
+    //tr要素を作成し、カート削除ボタン配置済みのtdを子要素として追加する
+    tr.appendChild(td);
+    
+    const tbody = document.querySelector("#cart tbody");
+    tbody.appendChild(tr);
+  });
+  
+}
+
+//remove関数　カートから削除する処理
+function removeCart(event) {
+  
+  //削除ボタンの親要素の親要素を取得し、trに格納する
+  const tr = event.target.parentElement.parentElement;
+  //tr内のすべてのtdを取得し、tdListに格納する
+  const tdList = tr.querySelectorAll("td");
+  
+  //削除対象のカート情報のidを取得する
+  const id = tdList.item(0).innerText;
+  //削除対象のidをcartListから除外する
+  cartList = cartList.filter(cart => {
+    return cart.id !== id;
+  });
+  
+  //カート表の削除対象行から子要素をすべて削除する
+  while (tr.lastChild){
+    tr.removeChild(tr.lastChild);
+  }
+  
+}
+
+//purchase関数　「購入ボタンのclickイベントにより呼び出される」
+function purchase(event){
+  
+  //javaにPOST送信するオブジェクトを取得・設定する cartListはグローバル変数？
+  const postObj = {
+    "userId": document.getElementById("hiddenUserId").value,
+    "cartList": cartList
+  };
+  
+  fetch("/ecsite/api/purchase",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(postObj),
+  })
+  .then(response => response.text())
+  .then(result => {
+    alert(`${result}種類の商品を購入しました。`);
+    const countElements = document.querySelectorAll(".count");
+    countElements.forEach(element =>{
+      element.value = 0;
+    });
+    
+    //カート表のtbody内の要素をクリアする
+    initCart();
+    //グローバル変数cartListをクリアする
+    cartList = [];   
+  })
+  .catch(error => {
+    console.error("Error",error);
+  });
+     
+}
+
+  //履歴ボタンのclickイベントにより呼び出される、履歴表示する関数
+  function showHistory(event){
+    
+    //JavaにPOST送信するオブジェクトを取得・設定する
+    const postObj = {"userId": document.getElementById("hiddenUserId").value};
+    
+    fetch("/ecsite/api/history",{
+      method:"POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(postObj),
+    })
+    .then(response => response.text())
+    .then(result => {
+      const historyList = JSON.parse(result);
+      
+      //id:historyのテーブルからtbodyを取得する
+      const tbody = document.querySelector("#history tbody");
+      
+      //履歴表をすべてクリアする
+      while(tbody.lastChild){
+        tbody.removeChild(tbody.lastChild);
+      }
+      
+      historyList.forEach((history,index) => {
+        //行(tr)作成
+        const tr = document.createElement("tr");
+        
+        //履歴情報の中から、表に出力するキーを限定するため配列化しておく
+        const keys = ["goodsName", "itemCount", "createdAt"];
+        
+        //for ofループでkeysを回し、表のtdを作成、trに追加する
+        for(key of keys){
+          const td = document.createElement("td");
+          td.innerText = history[key];
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+      
+    })
+    .catch(error => {
+      console.error("Error:", error);
+    });
+    
+  }
+
+</script>
+
+</head>
+<body>
+ <header>
+   <h1>ECサイト</h1>
+   <div>
+     <form name="loginForm" id="loginForm" method="post" action="#">
+       ユーザー名：<input type="text", name="userName" />
+       パスワード：<input type="password", name="password" />
+       <button type="submit">ログイン</button>
+     </form>
+     
+     <span id="welcome">ようこそ！　ゲストさん</span>
+     <input type="hidden" id="hiddenUserId" value="0" />
+   </div>
+   
+ </header>
+ 
+ <table id="goodsListTable">
+   <thead>
+     <tr>
+       <th>ID</th><th>商品名</th><th>価格</th><th>注文数</th><th>カート</th>
+     </tr>
+   </thead>
+   <tbody>
+     <!-- each構文でループ処理 -->
+     <tr th:each="item: ${goods}">
+       <td th:text="${item.id}" />
+       <td th:text="${item.goodsName}" />
+       <td th:text="${item.price}" />
+       <td><input type="number" class="count" value="0" /></td>
+       <td><button class="cartBtn">カートに入れる</button></td>
+     </tr>
+   </tbody>
+ </table>
+   
+ <!--   fieldsetにすると、テーブルを囲む枠線あり(inputタグなど複数ある入力項目をまとめられる) -->
+ <fieldset>
+   <legend>カート</legend>
+   <table id="cart">
+     <thead>
+       <tr>
+         <th>ID</th><th>商品名</th><th>価格</th><th>注文数</th><th>カート</th>
+       </tr>
+     </thead>
+     <tbody>
+     <!-- あとでJavascriptで動的にテーブル表を作成する -->
+     
+     </tbody>
+   </table>
+   <button id="purchaseBtn">購入</button>
+ </fieldset>
+ 
+ <fieldset>
+   <legend>購入履歴</legend>
+   <table id="history">
+     <thead>
+       <tr>
+         <th>商品名</th><th>注文数</th><th>購入日時</th>
+       </tr>
+     </thead>
+     <tbody>
+      <!--       あとでJavascriptで動的にテーブル行を作成する-->
+     </tbody>
+   </table>
+   <button id="historyBtn">履歴を表示</button>
+ </fieldset>
+
+</body>
+</html>
